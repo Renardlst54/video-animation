@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidéo Animation</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(100%);
+            z-index: 2;
+        }
+
+        .message-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .message-container.show {
+            animation: fadeIn 2s forwards;
+            animation-delay: 4s;
+        }
+
+        .message-container img {
+            max-width: 80%;
+            max-height: 60vh;
+            margin-bottom: 20px;
+        }
+
+        .message-container .text {
+            font-family: Arial, sans-serif;
+            font-size: 2em;
+            font-weight: bold;
+            color: #000;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+        }
+
+        .video-container.active {
+            animation: slideUpAndDisappear 5s forwards;
+        }
+
+        video {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #startButton {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 1.2em;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        #startButton:hover {
+            background: #444;
+        }
+
+        @keyframes slideUpAndDisappear {
+            0% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            20% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            80% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <button id="startButton">Démarrer la vidéo</button>
+    <div class="video-container">
+        <video id="myVideo" muted>
+            <source src="video.mp4.mp4" type="video/mp4">
+            Votre navigateur ne supporte pas la vidéo.
+        </video>
+    </div>
+    <div class="message-container">
+        <img src="image.jpg" alt="Image finale">
+        <div class="text">Laisse moi dormir gros lardon</div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(registration => console.log('Service Worker enregistré'))
+                .catch(error => console.error('Erreur Service Worker:', error));
+        }
+
+        const video = document.getElementById('myVideo');
+        const container = document.querySelector('.video-container');
+        const messageContainer = document.querySelector('.message-container');
+        const startButton = document.getElementById('startButton');
+        
+        startButton.addEventListener('click', async () => {
+            startButton.style.display = 'none';
+            container.classList.add('active');
+            messageContainer.classList.add('show');
+            
+            try {
+                await video.play();
+                video.muted = false;
+                
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'START_AUDIO'
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur de lecture:', error);
+            }
+        });
+
+        video.loop = true;
+        video.addEventListener('pause', () => {
+            if (!video.muted) video.play();
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    </script>
+</body>
+</html>
